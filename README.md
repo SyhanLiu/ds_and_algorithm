@@ -1,2 +1,2 @@
-# ds_and_algroithm
-data structure and algroithm
+# ds_and_algorithm
+data structure and algorithm
