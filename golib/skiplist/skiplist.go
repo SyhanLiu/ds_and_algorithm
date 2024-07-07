@@ -32,7 +32,7 @@ func NewSkipList[M, S cmp.Ordered, V any]() *SkipList[M, S, V] {
 	return this
 }
 
-func (sl *SkipList[M, S, V]) Insert(member M, score S, value V) {
+func (sl *SkipList[M, S, V]) Insert(member M, score S, value V) *Node[M, S, V] {
 	update := [maxLevel]*Node[M, S, V]{}
 	var curr *Node[M, S, V]
 	rank := [maxLevel]uint64{}
@@ -46,15 +46,16 @@ func (sl *SkipList[M, S, V]) Insert(member M, score S, value V) {
 			rank[i] = rank[i+1]
 		}
 
-		for next := curr.level[i].next; (next != nil) && (score > next.score || (score == next.score && next.member >= member)); {
+		for next := curr.level[i].next; (next != nil) && (score > next.score || (score == next.score && next.member < member)); {
 			rank[i] += curr.level[i].span
 			curr = next
 		}
 
 		// 已经节点已经存在则直接修改
-		if (curr.score == score) && (curr.member == member) {
+		// TODO need fix
+		if next := curr.level[0].next; next != nil && (next.score == score) && (next.member == member) {
 			curr.value = value
-			return
+			return curr
 		}
 
 		update[i] = curr
@@ -97,11 +98,55 @@ func (sl *SkipList[M, S, V]) Insert(member M, score S, value V) {
 	}
 
 	sl.length++
-	return
+	return node
 }
 
 func (sl *SkipList[M, S, V]) Delete(member M, score S) *Node[M, S, V] {
+	var update [maxLevel]*Node[M, S, V]
+	var i int
+
+	curr := sl.head
+	for i = sl.level; i >= 0; i-- {
+		for next := curr.level[i].next; next != nil && (score > next.score || (score == next.score && next.member < member)); {
+			curr = next
+		}
+	}
+
+	curr = curr.level[0].next
+	if curr != nil && curr.score == score && curr.member == member {
+		sl.deleteNode(curr, &update)
+		return curr
+	}
 	return nil
+}
+
+func (sl *SkipList[M, S, V]) deleteNode(target *Node[M, S, V], update *[maxLevel]*Node[M, S, V]) {
+	var i int
+	for i = 0; i < sl.level; i++ {
+		if update[i].level[i].next == target {
+			update[i].level[i].span += target.level[i].span - 1
+			update[i].level[i].next = target.level[i].next
+		} else {
+			update[i].level[i].span--
+		}
+	}
+
+	if sl.tail == target {
+		sl.tail = target.prev
+	} else {
+		target.level[0].next.prev = target.prev
+	}
+	// 上方代码比redis源码更易懂
+	//if target.level[0].next != nil {
+	//	target.level[0].next.prev = target.prev
+	//} else {
+	//	sl.tail = target.prev
+	//}
+
+	for sl.level > 1 && sl.head.level[sl.level-1].next != nil {
+		sl.level--
+	}
+	sl.length--
 }
 
 func (sl *SkipList[M, S, V]) Get(member M, score S) (*Node[M, S, V], uint64) {
@@ -147,7 +192,6 @@ type Node[M, S cmp.Ordered, V any] struct {
 	score  S
 	value  V
 	prev   *Node[M, S, V]
-	next   *Node[M, S, V] // TODO 似乎不需要
 	level  []Level[M, S, V]
 }
 
