@@ -46,9 +46,13 @@ func (sl *SkipList[M, S, V]) Insert(member M, score S, value V) *Node[M, S, V] {
 			rank[i] = rank[i+1]
 		}
 
-		for next := curr.level[i].next; (next != nil) && (score > next.score || (score == next.score && next.member < member)); {
-			rank[i] += curr.level[i].span
-			curr = next
+		for {
+			if next := curr.level[i].next; (next != nil) && (score > next.score || (score == next.score && next.member < member)) {
+				rank[i] += curr.level[i].span
+				curr = next
+			} else {
+				break
+			}
 		}
 
 		// 已经节点已经存在则直接修改
@@ -107,8 +111,13 @@ func (sl *SkipList[M, S, V]) Delete(member M, score S) *Node[M, S, V] {
 
 	curr := sl.head
 	for i = sl.level; i >= 0; i-- {
-		for next := curr.level[i].next; next != nil && (score > next.score || (score == next.score && next.member < member)); {
-			curr = next
+		for {
+			if next := curr.level[i].next; next != nil && (score > next.score || (score == next.score && next.member < member)) {
+				curr = next
+			} else {
+				update[i] = curr
+				break
+			}
 		}
 	}
 
@@ -155,9 +164,13 @@ func (sl *SkipList[M, S, V]) Get(member M, score S) (*Node[M, S, V], uint64) {
 
 	curr = sl.head
 	for i := sl.level - 1; i >= 0; i-- {
-		for next := curr.level[i].next; (next != nil) && (score > next.score || (score == next.score && next.member >= member)); {
-			rank += curr.level[i].span
-			curr = next
+		for {
+			if next := curr.level[i].next; (next != nil) && (score > next.score || (score == next.score && next.member >= member)) {
+				rank += curr.level[i].span
+				curr = next
+			} else {
+				break
+			}
 		}
 
 		if (curr.score == score) && (curr.member == member) {
