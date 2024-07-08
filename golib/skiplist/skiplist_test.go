@@ -127,3 +127,16 @@ func TestSkipList_InsertGetDelete(t *testing.T) {
 		}
 	}
 }
+
+func TestSkipList_Update(t *testing.T) {
+	member := "mem"
+	sl := NewSkipList[string, int, int]()
+	for i := 0; i < 10000; i++ {
+		r := rand.Intn(100000)
+		sl.Insert(member, 1, r)
+		n, rank := sl.Get(member, 1)
+		if n == nil || rank != 1 || sl.length != 1 {
+			t.Fatalf("update error,n:%v, rank:%d, sl.lenght:%d", n, rank, sl.length)
+		}
+	}
+}
