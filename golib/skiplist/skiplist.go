@@ -56,7 +56,6 @@ func (sl *SkipList[M, S, V]) Insert(member M, score S, value V) *Node[M, S, V] {
 		}
 
 		// 已经节点已经存在则直接修改
-		// TODO need fix
 		if next := curr.level[0].next; next != nil && (next.score == score) && (next.member == member) {
 			curr.value = value
 			return curr
