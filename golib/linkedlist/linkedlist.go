@@ -11,8 +11,16 @@ type LinkedList[T any] struct {
 
 type Node[T any] struct {
 	prev, next *Node[T]
-	value      T
 	owner      *LinkedList[T]
+	value      T
+}
+
+func (n *Node[T]) GetValue() T {
+	return n.value
+}
+
+func (n *Node[T]) SetValue(value T) {
+	n.value = value
 }
 
 func NewLinkedList[T any]() *LinkedList[T] {
@@ -64,6 +72,15 @@ func (l *LinkedList[T]) PushBack(value T) {
 	node.next = l.tail
 	prev.next = node
 	l.length++
+}
+
+func (l *LinkedList[T]) InsertFrontNode(node *Node[T]) {
+	node.owner = l
+	next := l.head.next
+	next.prev = node
+	node.next = next
+	node.prev = l.head
+	l.head.next = node
 }
 
 func (l *LinkedList[T]) PopFront() (T, bool) {
